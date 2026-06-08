@@ -1,0 +1,89 @@
+{
+  "$schema": "https://raw.githubusercontent.com/tauri-apps/tauri/dev/crates/tauri-cli/schema.json",
+  "productName": "Aurora Launcher",
+  "version": "0.1.0",
+  "identifier": "com.aurora.launcher",
+  "language": "zh-CN",
+  "build": {
+    "beforeDevCommand": "npm run dev",
+    "devUrl": "http://localhost:1420",
+    "beforeBuildCommand": "npm run build",
+    "frontendDist": "../dist"
+  },
+  "app": {
+    "title": "Aurora Launcher",
+    "windows": [
+      {
+        "title": "Aurora Launcher",
+        "width": 1280,
+        "height": 800,
+        "minWidth": 960,
+        "minHeight": 600,
+        "resizable": true,
+        "fullscreen": false,
+        "decorations": true,
+        "transparent": false,
+        "center": true
+      }
+    ],
+    "security": {
+      "csp": "default-src 'self'; img-src 'self' asset: https://data.jsdelivr.org https://piston-meta.mojang.com https://launchermeta.mojang.com https://crafatar.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; connect-src 'self' https: ipc: http://ipc.localhost"
+    }
+  },
+  "bundle": {
+    "active": true,
+    "targets": "all",
+    "icon": [
+      "icons/32x32.png",
+      "icons/128x128.png",
+      "icons/128x128@2x.png",
+      "icons/icon.icns",
+      "icons/icon.ico"
+    ],
+    "resources": [],
+    "copyright": "Copyright © 2026 Aurora Launcher Team. MIT License.",
+    "category": "Game",
+    "shortDescription": "新一代全平台智能 Minecraft 启动器",
+    "longDescription": "Aurora Launcher 是一款新一代全平台智能 Minecraft 启动器，采用像素玻璃美学设计。支持微软正版登录、多线程下载、实例隔离、Fabric/Forge 模组加载器安装，以及 BMCLAPI 镜像加速。基于 Tauri 2.0 + Vue 3 构建，安装包小于 10MB。",
+    "windows": {
+      "certificateThumbprint": null,
+      "digestAlgorithm": "sha256",
+      "timestampUrl": "",
+      "webviewInstallMode": {
+        "type": "downloadBootstrapper"
+      },
+      "nsis": {
+        "languages": [
+          "SimpChinese",
+          "English"
+        ],
+        "displayLanguageSelector": true,
+        "installMode": "currentUser",
+        "allowDowngrade": true,
+        "allowToChangeInstallationDirectory": true,
+        "installerIcon": "icons/icon.ico",
+        "headerImage": null,
+        "sidebarImage": null
+      }
+    },
+    "macOS": {
+      "minimumSystemVersion": "10.15"
+    },
+    "linux": {
+      "deb": {
+        "depends": []
+      },
+      "appimage": {
+        "bundleMediaFramework": false
+      }
+    },
+    "externalBin": [],
+    "customDNSServers": []
+  },
+  "plugins": {
+    "updater": {
+      "pubkey": "",
+      "endpoints": []
+    }
+  }
+}

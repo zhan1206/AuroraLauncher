@@ -1,0 +1,42 @@
+# ─── Dependencies ─────────────────────
+node_modules/
+package-lock.json
+
+# ─── Build output ─────────────────────
+dist/
+dist-ssr/
+
+# ─── Rust / Tauri ─────────────────────
+src-tauri/target/
+src-tauri/WixTools/
+
+# ─── IDE / Editor ─────────────────────
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
+Thumbs.db
+
+# ─── Environment ──────────────────────
+.env
+.env.local
+.env.*.local
+
+# ─── Logs ─────────────────────────────
+*.log
+npm-debug.log*
+
+# ─── OS generated ─────────────────────
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+
+# ─── Temporary / Cache ────────────────
+*.tmp
+*.temp
+.cache/

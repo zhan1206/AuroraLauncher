@@ -1,0 +1,324 @@
+/* ═══════════════════════════════════════════════════════════
+   Aurora Launcher — Pixel Glass Visual System
+   The core aesthetic: frosted glass + pixel grid + Minecraft vibes
+   ═══════════════════════════════════════════════════════════ */
+
+:root {
+  /* ── Brand Colors ────────────────────────────────────── */
+  --color-primary: #7EC850;
+  --color-primary-dark: #5BA030;
+  --color-primary-light: #9FE070;
+  --color-primary-rgb: 126, 200, 80;
+
+  /* ── Surface & Background ────────────────────────────── */
+  --color-bg: #0f1117;
+  --color-bg-secondary: #161822;
+  --color-surface: rgba(255, 255, 255, 0.08);
+  --color-surface-hover: rgba(255, 255, 255, 0.12);
+  --color-surface-active: rgba(255, 255, 255, 0.16);
+  --color-surface-blur: rgba(255, 255, 255, 0.05);
+  --color-surface-blur-value: blur(20px);
+
+  /* ── Text ────────────────────────────────────────────── */
+  --color-text: #e8e8e8;
+  --color-text-secondary: #a0a0a0;
+  --color-text-muted: #666666;
+  --color-text-inverse: #0f1117;
+
+  /* ── Status Colors ───────────────────────────────────── */
+  --color-danger: #E05050;
+  --color-warning: #E0C050;
+  --color-info: #5090E0;
+  --color-success: #7EC850;
+
+  /* ── Borders ─────────────────────────────────────────── */
+  --color-border: rgba(255, 255, 255, 0.1);
+  --color-border-hover: rgba(255, 255, 255, 0.2);
+  --color-border-active: var(--color-primary);
+  --border-radius: 4px;
+  --border-width: 2px;
+
+  /* ── Typography ──────────────────────────────────────── */
+  --font-display: "Press Start 2P", "Mojangles", monospace;
+  --font-body: "Determination Mono", "Consolas", "Monaco", monospace;
+  --font-size-xs: 10px;
+  --font-size-sm: 12px;
+  --font-size-base: 14px;
+  --font-size-lg: 16px;
+  --font-size-xl: 20px;
+  --font-size-2xl: 28px;
+  --font-size-3xl: 36px;
+
+  /* ── Spacing ─────────────────────────────────────────── */
+  --space-xs: 4px;
+  --space-sm: 8px;
+  --space-md: 16px;
+  --space-lg: 24px;
+  --space-xl: 32px;
+  --space-2xl: 48px;
+
+  /* ── Shadows ────────────────────────────────────────── */
+  --shadow-pixel: 4px 4px 0px 0px rgba(0, 0, 0, 0.3);
+  --shadow-pixel-sm: 2px 2px 0px 0px rgba(0, 0, 0, 0.3);
+  --shadow-pixel-lg: 6px 6px 0px 0px rgba(0, 0, 0, 0.25);
+  --shadow-glow: 0 0 20px rgba(126, 200, 80, 0.3);
+  --shadow-glow-strong: 0 0 40px rgba(126, 200, 80, 0.5);
+
+  /* ── Pixel Grid Texture ─────────────────────────────── */
+  --texture-grid: url("data:image/svg+xml,%3Csvg width='2' height='2' xmlns='http://www.w3.org/2000/svg'%3E%3Crect width='1' height='1' fill='rgba(255,255,255,0.03)'/%3E%3C/svg%3E");
+
+  /* ── Transitions ────────────────────────────────────── */
+  --transition-fast: 0.1s ease;
+  --transition-normal: 0.2s ease;
+  --transition-slow: 0.4s ease;
+}
+
+/* ═══════════════════════════════════════════════════════════
+   Glass Surface Components
+   ═══════════════════════════════════════════════════════════ */
+
+/* Base glass panel */
+.glass-panel {
+  background: var(--color-surface);
+  backdrop-filter: var(--color-surface-blur-value);
+  -webkit-backdrop-filter: var(--color-surface-blur-value);
+  border: var(--border-width) solid var(--color-border);
+  border-radius: var(--border-radius);
+  box-shadow: var(--shadow-pixel-sm);
+  overflow: hidden;
+}
+
+/* Glass panel with pixel grid overlay */
+.glass-panel-grid {
+  position: relative;
+}
+
+.glass-panel-grid::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background-image: var(--texture-grid);
+  background-repeat: repeat;
+  pointer-events: none;
+  z-index: 0;
+  opacity: 0.6;
+}
+
+.glass-panel-grid > * {
+  position: relative;
+  z-index: 1;
+}
+
+/* Elevated glass panel (more prominent) */
+.glass-panel-elevated {
+  background: rgba(255, 255, 255, 0.1);
+  backdrop-filter: blur(24px);
+  -webkit-backdrop-filter: blur(24px);
+  border: var(--border-width) solid rgba(255, 255, 255, 0.15);
+  border-radius: var(--border-radius);
+  box-shadow: var(--shadow-pixel);
+}
+
+/* Glass card for content blocks */
+.glass-card {
+  background: var(--color-surface);
+  backdrop-filter: var(--color-surface-blur-value);
+  -webkit-backdrop-filter: var(--color-surface-blur-value);
+  border: var(--border-width) solid var(--color-border);
+  border-radius: var(--border-radius);
+  padding: var(--space-md);
+  transition: all var(--transition-normal);
+}
+
+.glass-card:hover {
+  background: var(--color-surface-hover);
+  border-color: var(--color-border-hover);
+  box-shadow: var(--shadow-pixel-sm);
+}
+
+/* ═══════════════════════════════════════════════════════════
+   Pixel Buttons
+   ═══════════════════════════════════════════════════════════ */
+
+.btn-pixel {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-xs);
+  padding: 8px 16px;
+  font-family: var(--font-body);
+  font-size: var(--font-size-base);
+  color: var(--color-text);
+  background: var(--color-surface);
+  border: var(--border-width) solid var(--color-border);
+  border-radius: var(--border-radius);
+  box-shadow: var(--shadow-pixel-sm);
+  cursor: pointer;
+  transition: all var(--transition-fast);
+  user-select: none;
+  text-decoration: none;
+  line-height: 1;
+}
+
+.btn-pixel:hover {
+  background: var(--color-surface-hover);
+  border-color: var(--color-border-hover);
+  transform: translate(-1px, -1px);
+  box-shadow: var(--shadow-pixel);
+}
+
+.btn-pixel:active {
+  transform: translate(1px, 1px);
+  box-shadow: none;
+  background: var(--color-surface-active);
+}
+
+/* Primary button with brand color */
+.btn-pixel-primary {
+  color: var(--color-text-inverse);
+  background: var(--color-primary);
+  border-color: var(--color-primary-dark);
+  box-shadow: var(--shadow-pixel-sm);
+  text-shadow: 0 1px 0 rgba(0, 0, 0, 0.3);
+}
+
+.btn-pixel-primary:hover {
+  background: var(--color-primary-light);
+  border-color: var(--color-primary);
+  box-shadow: var(--shadow-pixel), var(--shadow-glow);
+}
+
+.btn-pixel-primary:active {
+  background: var(--color-primary-dark);
+}
+
+/* Danger button */
+.btn-pixel-danger {
+  color: #fff;
+  background: var(--color-danger);
+  border-color: #c04040;
+}
+
+.btn-pixel-danger:hover {
+  background: #e86060;
+}
+
+/* Disabled state */
+.btn-pixel:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+  transform: none;
+  box-shadow: none;
+}
+
+/* ═══════════════════════════════════════════════════════════
+   Pixel Input Fields
+   ═══════════════════════════════════════════════════════════ */
+
+.input-pixel {
+  width: 100%;
+  padding: 8px 12px;
+  font-family: var(--font-body);
+  font-size: var(--font-size-base);
+  color: var(--color-text);
+  background: rgba(0, 0, 0, 0.3);
+  border: var(--border-width) solid var(--color-border);
+  border-radius: var(--border-radius);
+  outline: none;
+  transition: all var(--transition-fast);
+}
+
+.input-pixel::placeholder {
+  color: var(--color-text-muted);
+}
+
+.input-pixel:hover {
+  border-color: var(--color-border-hover);
+}
+
+.input-pixel:focus {
+  border-color: var(--color-primary);
+  box-shadow: 0 0 0 1px var(--color-primary);
+}
+
+/* ═══════════════════════════════════════════════════════════
+   Pixel Progress Bar
+   ═══════════════════════════════════════════════════════════ */
+
+.progress-pixel {
+  width: 100%;
+  height: 16px;
+  background: rgba(0, 0, 0, 0.4);
+  border: var(--border-width) solid var(--color-border);
+  border-radius: var(--border-radius);
+  overflow: hidden;
+  position: relative;
+}
+
+.progress-pixel-fill {
+  height: 100%;
+  background: var(--color-primary);
+  transition: width 0.3s ease;
+  position: relative;
+}
+
+/* Scanline effect on the progress bar */
+.progress-pixel-fill::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: repeating-linear-gradient(
+    90deg,
+    transparent,
+    transparent 2px,
+    rgba(0, 0, 0, 0.1) 2px,
+    rgba(0, 0, 0, 0.1) 4px
+  );
+}
+
+/* ═══════════════════════════════════════════════════════════
+   Pixel Tag / Badge
+   ═══════════════════════════════════════════════════════════ */
+
+.tag-pixel {
+  display: inline-flex;
+  align-items: center;
+  padding: 2px 8px;
+  font-family: var(--font-body);
+  font-size: var(--font-size-xs);
+  color: var(--color-primary);
+  background: rgba(126, 200, 80, 0.1);
+  border: 1px solid rgba(126, 200, 80, 0.3);
+  border-radius: 2px;
+}
+
+/* ═══════════════════════════════════════════════════════════
+   Section Headers
+   ═══════════════════════════════════════════════════════════ */
+
+.section-title {
+  font-family: var(--font-display);
+  font-size: var(--font-size-lg);
+  color: var(--color-primary);
+  text-shadow: 0 0 10px rgba(var(--color-primary-rgb), 0.4);
+  margin-bottom: var(--space-md);
+  padding-bottom: var(--space-sm);
+  border-bottom: var(--border-width) solid var(--color-border);
+}
+
+/* ═══════════════════════════════════════════════════════════
+   Pixel Divider
+   ═══════════════════════════════════════════════════════════ */
+
+.divider-pixel {
+  border: none;
+  height: var(--border-width);
+  background: var(--color-border);
+  margin: var(--space-md) 0;
+}
+
+/* Dashed variant */
+.divider-pixel-dashed {
+  background: none;
+  border-top: 2px dashed var(--color-border);
+}

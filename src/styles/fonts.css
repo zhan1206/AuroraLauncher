@@ -1,0 +1,26 @@
+/* ═══════════════════════════════════════════════════════════
+   Aurora Launcher — Font Loading
+   ═══════════════════════════════════════════════════════════ */
+
+/* ── Google Fonts: Press Start 2P (pixel display font) ── */
+@import url("https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap");
+
+/* ── Determination Mono fallback ──────────────────────── */
+/* This font is loaded from local assets if available,
+   otherwise falls back to system monospace. */
+@font-face {
+  font-family: "Determination Mono";
+  src: local("Determination Mono"),
+       local("DeterminationMono"),
+       local("Consolas"),
+       local("Monaco");
+  font-display: swap;
+}
+
+/* ── Mojangles fallback ──────────────────────────────── */
+@font-face {
+  font-family: "Mojangles";
+  src: local("Mojangles"),
+       local("Mojangles");
+  font-display: swap;
+}
