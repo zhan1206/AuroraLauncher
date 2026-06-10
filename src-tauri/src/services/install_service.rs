@@ -9,7 +9,7 @@ use crate::models::settings::DownloadMirror;
 use crate::models::version::{Library, VersionDetail, VersionEntry};
 use crate::services::download_service;
 use crate::services::version_service::VersionService;
-use crate::utils::http;
+use crate::utils::{file, http};
 use std::path::PathBuf;
 use serde::{Deserialize, Serialize};
 use sqlx::SqlitePool;
@@ -72,6 +72,16 @@ pub async fn install_version(
     let detail = version_service
         .get_version_detail(&entry.url, mirror)
         .await?;
+
+    // Save version detail JSON so the launcher can read it later
+    let version_json_path = target_dir
+        .join("versions")
+        .join(&detail.id)
+        .join(format!("{}.json", detail.id));
+    let detail_json = serde_json::to_string_pretty(&detail)
+        .map_err(|e| AppError::Serialization(e.to_string()))?;
+    file::write_file_with_dirs(&version_json_path, detail_json.as_bytes()).await?;
+    tracing::info!("Saved version JSON to {}", version_json_path.display());
 
     // Step 3: Build the list of files to download
     let files = build_install_file_list(&detail, target_dir, mirror);

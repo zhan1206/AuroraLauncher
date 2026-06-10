@@ -41,7 +41,7 @@ pub async fn start_download(
     let http_client = state.http_client.clone();
     let app_handle = state.app_handle.clone();
 
-    tokio::spawn(async move {
+    tauri::async_runtime::spawn(async move {
         if let Err(e) = download_service::start_download(
             &pool_clone,
             &http_client,
@@ -82,7 +82,7 @@ pub async fn resume_download(
     let http_client = state.http_client.clone();
     let app_handle = state.app_handle.clone();
 
-    tokio::spawn(async move {
+    tauri::async_runtime::spawn(async move {
         if let Err(e) = download_service::start_download(
             &pool_clone,
             &http_client,

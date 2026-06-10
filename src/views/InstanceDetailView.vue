@@ -124,6 +124,14 @@ function logLevelClass(level: string): string {
           </div>
           <LaunchButton :instance-id="instance.id" />
         </div>
+        <!-- Launch error banner -->
+        <div
+          v-if="launchStore.currentInstanceId === instance.id && launchStore.error"
+          class="instance-detail__launch-error"
+        >
+          <span class="instance-detail__launch-error-icon">⚠️</span>
+          <span class="instance-detail__launch-error-text">{{ launchStore.error }}</span>
+        </div>
       </div>
 
       <!-- Tab navigation -->
@@ -238,6 +246,28 @@ function logLevelClass(level: string): string {
   align-items: center;
   justify-content: space-between;
   gap: 16px;
+}
+
+.instance-detail__launch-error {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 12px;
+  padding: 10px 14px;
+  background: rgba(224, 64, 64, 0.15);
+  border: 1px solid rgba(224, 64, 64, 0.3);
+  border-radius: var(--border-radius);
+  font-family: var(--font-body);
+  font-size: var(--font-size-sm);
+  color: var(--color-danger);
+}
+
+.instance-detail__launch-error-icon {
+  flex-shrink: 0;
+}
+
+.instance-detail__launch-error-text {
+  word-break: break-all;
 }
 
 .instance-detail__header-info {

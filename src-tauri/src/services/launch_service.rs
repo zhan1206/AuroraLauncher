@@ -158,6 +158,25 @@ pub async fn launch_game(
     let instance = instance_service::get_instance(pool, instance_id).await?;
     let launch_config = instance_service::parse_launch_config(&instance);
 
+    // ── Pre-launch validation ──────────────────────────────────────────────
+    let data_dir = file::data_dir();
+    let version_dir = data_dir.join("versions").join(&instance.version_id);
+    let version_json = version_dir.join(format!("{}.json", instance.version_id));
+    let client_jar = version_dir.join(format!("{}.jar", instance.version_id));
+
+    if !version_json.exists() {
+        return Err(AppError::LaunchFailed(format!(
+            "版本文件未找到: {}。请先下载该版本后再启动。",
+            instance.version_id
+        )));
+    }
+    if !client_jar.exists() {
+        return Err(AppError::LaunchFailed(format!(
+            "客户端 JAR 未找到: {}。请先下载该版本后再启动。",
+            client_jar.display()
+        )));
+    }
+
     // Resolve the Java runtime
     let java_runtime = java_service::resolve_java(&instance.version_id).await?;
 
@@ -231,7 +250,7 @@ pub async fn launch_game(
     // for the entire lifetime of the spawned task.
     let game_process_arc = Arc::clone(game_process);
 
-    tokio::spawn(async move {
+    tauri::async_runtime::spawn(async move {
         // Get the stdout and stderr handles from the process
         let (stdout, stderr) = {
             let mut gp = game_process_arc.lock().await;
@@ -246,7 +265,7 @@ pub async fn launch_game(
 
         // Spawn tasks to read stdout and stderr
         let handle_out = app_handle.clone();
-        let stdout_task = tokio::spawn(async move {
+        let stdout_task = tauri::async_runtime::spawn(async move {
             if let Some(stdout) = stdout {
                 use tokio::io::{AsyncBufReadExt, BufReader};
                 let reader = BufReader::new(stdout);
@@ -264,7 +283,7 @@ pub async fn launch_game(
         });
 
         let handle_err = app_handle.clone();
-        let stderr_task = tokio::spawn(async move {
+        let stderr_task = tauri::async_runtime::spawn(async move {
             if let Some(stderr) = stderr {
                 use tokio::io::{AsyncBufReadExt, BufReader};
                 let reader = BufReader::new(stderr);
