@@ -149,3 +149,38 @@ pub fn version_manifest_url(mirror: &DownloadMirror) -> String {
         mirror,
     )
 }
+
+/// Fetch the version manifest with automatic mirror fallback.
+///
+/// First tries the official Mojang URL. If that fails, falls back to
+/// BMCLAPI (commonly used in mainland China for faster access).
+pub async fn fetch_version_manifest(
+    client: &Client,
+    mirror: &DownloadMirror,
+) -> Result<reqwest::Response, AppError> {
+    let primary_url = version_manifest_url(mirror);
+
+    match retry_request(
+        client,
+        client.get(&primary_url)
+    ).await {
+        Ok(response) => Ok(response),
+        Err(e) => {
+            // If already using BMCLAPI, just propagate the error
+            if matches!(mirror, DownloadMirror::Bmclapi) {
+                return Err(e);
+            }
+
+            tracing::warn!(
+                "Failed to fetch from official mirror: {}. Trying BMCLAPI fallback...",
+                e
+            );
+
+            let fallback_url = version_manifest_url(&DownloadMirror::Bmclapi);
+            retry_request(
+                client,
+                client.get(&fallback_url),
+            ).await
+        }
+    }
+}

@@ -38,6 +38,8 @@ pub struct VersionEntry {
     /// Absolute URL to the version detail JSON.
     pub url: String,
     /// ISO-8601 timestamp of when this version was released.
+    /// Mojang JSON uses camelCase: "releaseTime".
+    #[serde(alias = "releaseTime")]
     pub release_time: String,
     /// SHA-1 hash of the version detail JSON (for cache validation).
     #[serde(default)]
@@ -56,23 +58,29 @@ pub struct VersionDetail {
     #[serde(rename = "type")]
     pub version_type: String,
     /// The main class used to launch the game (e.g. "net.minecraft.client.main.Main").
+    /// Mojang JSON uses camelCase: "mainClass".
+    #[serde(alias = "mainClass")]
     pub main_class: String,
     /// Libraries required by this version.
     pub libraries: Vec<Library>,
     /// Downloadable assets for this version (client, server, server_mappings, client_mappings).
     pub downloads: VersionDownloads,
     /// Asset index metadata.
+    /// Mojang JSON uses camelCase: "assetIndex".
+    #[serde(alias = "assetIndex")]
     pub asset_index: AssetIndexRef,
     /// Arguments for launching the game (newer format, split into game and JVM args).
     #[serde(default)]
     pub arguments: Option<VersionArguments>,
     /// Legacy `minecraftArguments` field (used before 1.13).
-    #[serde(default)]
+    #[serde(alias = "minecraftArguments", default)]
     pub minecraft_arguments: Option<String>,
     /// Minimum Java version required.
-    #[serde(default)]
+    #[serde(alias = "javaVersion", default)]
     pub java_version: Option<JavaVersion>,
     /// ISO-8601 timestamp of when this version was released.
+    /// Mojang JSON uses camelCase: "releaseTime".
+    #[serde(alias = "releaseTime")]
     pub release_time: String,
 }
 
@@ -126,8 +134,10 @@ pub struct VersionDownloads {
     /// Server download.
     pub server: Option<DownloadInfo>,
     /// Client mappings.
+    #[serde(alias = "clientMappings", default)]
     pub client_mappings: Option<DownloadInfo>,
     /// Server mappings.
+    #[serde(alias = "serverMappings", default)]
     pub server_mappings: Option<DownloadInfo>,
 }
 
@@ -152,7 +162,7 @@ pub struct AssetIndexRef {
     /// File size in bytes.
     pub size: u64,
     /// Total number of assets.
-    #[serde(default)]
+    #[serde(alias = "totalSize", default)]
     pub total_size: Option<u64>,
     /// Download URL for the asset index JSON.
     pub url: String,
@@ -171,6 +181,7 @@ pub struct VersionArguments {
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct JavaVersion {
     /// Major version number (e.g. 17, 21).
+    #[serde(alias = "majorVersion")]
     pub major_version: u32,
     /// Component name (e.g. "java-runtime-gamma").
     pub component: String,

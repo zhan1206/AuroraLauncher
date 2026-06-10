@@ -632,21 +632,21 @@ pub async fn login_offline(pool: &SqlitePool, username: &str) -> Result<Account,
 /// Generate an offline UUID from a username.
 ///
 /// Uses the same algorithm as the vanilla Minecraft launcher:
-/// UUID v3 with namespace "OfflinePlayer" + username.
+/// Java's UUID.nameUUIDFromBytes("OfflinePlayer:" + username) which is
+/// UUID v3 with MD5, without a namespace prefix.
 fn generate_offline_uuid(username: &str) -> String {
-    use sha2::{Digest, Sha256};
+    use md5::{Digest, Md5};
 
-    let mut hasher = Sha256::new();
+    let mut hasher = Md5::new();
     hasher.update(b"OfflinePlayer:");
     hasher.update(username.as_bytes());
     let hash = hasher.finalize();
 
     // Format as UUID (take first 16 bytes and set version/variant bits)
-    let bytes = &hash[..16];
     let mut uuid_bytes = [0u8; 16];
-    uuid_bytes.copy_from_slice(bytes);
+    uuid_bytes.copy_from_slice(&hash[..16]);
 
-    // Set version to 3 (name-based)
+    // Set version to 3 (name-based, MD5)
     uuid_bytes[6] = (uuid_bytes[6] & 0x0f) | 0x30;
     // Set variant to RFC 4122
     uuid_bytes[8] = (uuid_bytes[8] & 0x3f) | 0x80;
@@ -658,8 +658,8 @@ fn generate_offline_uuid(username: &str) -> String {
         u16::from_be_bytes([uuid_bytes[6], uuid_bytes[7]]),
         u16::from_be_bytes([uuid_bytes[8], uuid_bytes[9]]),
         u64::from_be_bytes([
-            uuid_bytes[10], uuid_bytes[11], uuid_bytes[12], uuid_bytes[13], uuid_bytes[14],
-            uuid_bytes[15], 0, 0
+            uuid_bytes[10], uuid_bytes[11], uuid_bytes[12], uuid_bytes[13],
+            uuid_bytes[14], uuid_bytes[15], 0, 0
         ]) >> 16,
     )
 }

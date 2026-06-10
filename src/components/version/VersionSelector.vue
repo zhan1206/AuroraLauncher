@@ -27,7 +27,7 @@ const versionStore = useVersionStore();
 
 // Filter state
 const searchQuery = ref('');
-const activeFilter = ref<VersionTypeFilter>('release');
+const activeFilter = ref<VersionTypeFilter>('all');
 
 // Load the version manifest on mount
 onMounted(() => {
@@ -55,6 +55,7 @@ function selectVersion(versionId: string): void {
 
 /** Filter tabs. */
 const filterTabs: { key: VersionTypeFilter; label: string }[] = [
+  { key: 'all', label: '全部' },
   { key: 'release', label: '正式版' },
   { key: 'snapshot', label: '快照' },
   { key: 'old_alpha', label: '远古版' },
@@ -87,6 +88,10 @@ const filterTabs: { key: VersionTypeFilter; label: string }[] = [
     <div class="version-selector__list">
       <div v-if="versionStore.loading" class="version-selector__loading">
         加载版本列表中...
+      </div>
+
+      <div v-else-if="versionStore.error" class="version-selector__error">
+        {{ versionStore.error }}
       </div>
 
       <div v-else-if="filteredVersions.length === 0" class="version-selector__empty">
@@ -186,5 +191,15 @@ const filterTabs: { key: VersionTypeFilter; label: string }[] = [
   font-family: var(--font-body);
   font-size: var(--font-size-sm);
   color: var(--color-text-muted);
+}
+
+.version-selector__error {
+  padding: 24px;
+  text-align: center;
+  font-family: var(--font-body);
+  font-size: var(--font-size-sm);
+  color: var(--color-danger);
+  white-space: pre-wrap;
+  word-break: break-all;
 }
 </style>

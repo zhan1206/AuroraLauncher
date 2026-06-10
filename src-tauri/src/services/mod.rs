@@ -12,3 +12,4 @@ pub mod loader_service;
 pub mod settings_service;
 pub mod account_service;
 pub mod launch_service;
+pub mod install_service;

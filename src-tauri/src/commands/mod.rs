@@ -10,3 +10,4 @@ pub mod java;
 pub mod settings;
 pub mod account;
 pub mod launch;
+pub mod install;
