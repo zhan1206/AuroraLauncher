@@ -15,7 +15,6 @@
     "dialog:allow-confirm",
     "process:default",
     "process:allow-restart",
-    "process:allow-exit",
-    "updater:default"
+    "process:allow-exit"
   ]
 }

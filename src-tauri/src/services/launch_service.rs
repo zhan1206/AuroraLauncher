@@ -402,7 +402,7 @@ async fn resolve_version_chain(version_id: &str) -> Result<ResolvedVersion, AppE
             )))?;
 
         // Check if this version inherits from another
-        match &version.inherits_from {
+        match version.inherits_from.clone() {
             Some(parent) => {
                 chain.push(version);
                 current_id = parent.clone();
@@ -431,14 +431,12 @@ async fn resolve_version_chain(version_id: &str) -> Result<ResolvedVersion, AppE
     let mut all_libraries: Vec<serde_json::Value> = Vec::new();
     let mut seen_names: HashSet<String> = HashSet::new();
     for version in &chain {
-        if let Some(libs) = version.libraries.as_array() {
-            for lib in libs {
-                if let Some(name) = lib.get("name").and_then(|n| n.as_str()) {
-                    let name_key = name.to_string();
-                    if !seen_names.contains(&name_key) {
-                        seen_names.insert(name_key);
-                        all_libraries.push(lib.clone());
-                    }
+        for lib in &version.libraries {
+            if let Some(name) = lib.get("name").and_then(|n| n.as_str()) {
+                let name_key = name.to_string();
+                if !seen_names.contains(&name_key) {
+                    seen_names.insert(name_key);
+                    all_libraries.push(lib.clone());
                 }
             }
         }
@@ -697,10 +695,12 @@ fn extract_native_jar(
             continue;
         }
 
-        let file_name = Path::new(&entry_name)
+        let Some(file_name) = Path::new(&entry_name)
             .file_name()
             .map(|n| n.to_string_lossy().to_string())
-            .unwrap_or_else(|| continue);
+        else {
+            continue;
+        };
 
         let out_path = target_dir.join(&file_name);
 
@@ -937,13 +937,12 @@ fn rule_matches_os(
         platform::McPlatform::MacOS => "osx",
     };
 
-    match os_name {
+    (match os_name {
         "windows" => platform_info.os == platform::McPlatform::Windows,
         "linux" => platform_info.os == platform::McPlatform::Linux,
         "osx" => platform_info.os == platform::McPlatform::MacOS,
         _ => true,
-    }
-    && if let Some(arch) = os_val.get("arch").and_then(|a| a.as_str()) {
+    }) && (if let Some(arch) = os_val.get("arch").and_then(|a| a.as_str()) {
         let current_arch = match platform_info.arch {
             platform::McArch::X86_64 => "x86_64",
             platform::McArch::X86 => "x86",
@@ -952,7 +951,7 @@ fn rule_matches_os(
         arch == current_arch
     } else {
         true
-    }
+    })
 }
 
 /// 检查规则的 features 条件是否匹配。

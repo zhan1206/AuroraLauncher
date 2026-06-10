@@ -33,7 +33,6 @@ pub fn build_http_client() -> Result<Client, AppError> {
         .connect_timeout(Duration::from_secs(CONNECT_TIMEOUT_SECS))
         .read_timeout(Duration::from_secs(READ_TIMEOUT_SECS))
         .use_rustls_tls()
-        .http2_prior_knowledge(false)
         .build()
         .map_err(|e| AppError::NetworkRequest(format!("Failed to build HTTP client: {}", e)))
 }
@@ -96,7 +95,9 @@ pub async fn retry_request(
     for attempt in 0..=MAX_RETRIES {
         let request = request_builder
             .try_clone()
-            .ok_or_else(|| AppError::NetworkRequest("Cannot clone request for retry".to_string()))?;
+            .ok_or_else(|| AppError::NetworkRequest("Cannot clone request for retry".to_string()))?
+            .build()
+            .map_err(|e| AppError::NetworkRequest(format!("Failed to build request: {}", e)))?;
 
         match client.execute(request).await {
             Ok(response) => {

@@ -21,7 +21,6 @@ pub fn run() {
         .plugin(tauri_plugin_shell::init())
         .plugin(tauri_plugin_dialog::init())
         .plugin(tauri_plugin_process::init())
-        .plugin(tauri_plugin_updater::Builder::new().build())
         .setup(|app| {
             // Initialize tracing subscriber
             tracing_subscriber::fmt::init();
@@ -39,7 +38,7 @@ pub fn run() {
 
             // Initialize the database asynchronously
             let app_handle_clone = app.handle().clone();
-            tokio::spawn(async move {
+            tauri::async_runtime::spawn(async move {
                 let data_dir = file::data_dir();
                 match db::init_db(&data_dir).await {
                     Ok(pool) => {

@@ -1,9 +1,8 @@
 {
-  "$schema": "https://raw.githubusercontent.com/tauri-apps/tauri/dev/crates/tauri-cli/schema.json",
+  "$schema": "https://schema.tauri.app/config/2",
   "productName": "Aurora Launcher",
   "version": "0.1.0",
   "identifier": "com.aurora.launcher",
-  "language": "zh-CN",
   "build": {
     "beforeDevCommand": "npm run dev",
     "devUrl": "http://localhost:1420",
@@ -11,7 +10,6 @@
     "frontendDist": "../dist"
   },
   "app": {
-    "title": "Aurora Launcher",
     "windows": [
       {
         "title": "Aurora Launcher",
@@ -51,19 +49,6 @@
       "timestampUrl": "",
       "webviewInstallMode": {
         "type": "downloadBootstrapper"
-      },
-      "nsis": {
-        "languages": [
-          "SimpChinese",
-          "English"
-        ],
-        "displayLanguageSelector": true,
-        "installMode": "currentUser",
-        "allowDowngrade": true,
-        "allowToChangeInstallationDirectory": true,
-        "installerIcon": "icons/icon.ico",
-        "headerImage": null,
-        "sidebarImage": null
       }
     },
     "macOS": {
@@ -77,13 +62,7 @@
         "bundleMediaFramework": false
       }
     },
-    "externalBin": [],
-    "customDNSServers": []
+    "externalBin": []
   },
-  "plugins": {
-    "updater": {
-      "pubkey": "",
-      "endpoints": []
-    }
-  }
+  "plugins": {}
 }
