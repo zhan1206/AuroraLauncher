@@ -132,35 +132,45 @@ pub fn adoptium_platform_id() -> &'static str {
 /// Rules:
 /// - MC 1.20.5+ → Java 21
 /// - MC 1.17+ → Java 17
-/// - All others → Java 8
+/// - All others → Java 21 (default to latest stable)
 pub fn required_java_version(version_id: &str) -> u32 {
     // Parse the major.minor version from the version ID
     let parts: Vec<&str> = version_id.split('.').collect();
     if parts.len() >= 2 {
         if let Ok(major) = parts[0].parse::<u32>() {
             if let Ok(minor) = parts[1].parse::<u32>() {
-                // MC 1.20.5+
-                if major == 1 && minor > 20 {
-                    return 21;
-                }
-                if major == 1 && minor == 20 {
-                    // Check patch version for 1.20.x
-                    if parts.len() >= 3 {
-                        if let Ok(patch) = parts[2].parse::<u32>() {
-                            if patch >= 5 {
-                                return 21;
+                // Standard Minecraft format: 1.x.x
+                if major == 1 {
+                    // MC 1.20.5+
+                    if minor > 20 {
+                        return 21;
+                    }
+                    if minor == 20 {
+                        // Check patch version for 1.20.x
+                        if parts.len() >= 3 {
+                            if let Ok(patch) = parts[2].parse::<u32>() {
+                                if patch >= 5 {
+                                    return 21;
+                                }
                             }
                         }
+                        return 17;
+                    }
+                    // MC 1.17 - 1.19.x → Java 17
+                    if minor >= 17 {
+                        return 17;
                     }
                 }
-                // MC 1.17+
-                if major == 1 && minor >= 17 {
-                    return 17;
-                }
+
+                // Non-1.x versions or unrecognizable format → default to Java 21
+                // Modern mod loaders and custom versions typically need Java 17+
+                return 21;
             }
         }
     }
-    8
+
+    // Unrecognizable format → default to Java 21 (widely compatible)
+    21
 }
 
 /// Get the platform-specific data directory for Adoptium JRE installations.

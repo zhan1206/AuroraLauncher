@@ -250,6 +250,8 @@ pub async fn download_java(
 /// - MC 1.20.5+ → Java 21
 /// - MC 1.17+ → Java 17
 /// - All others → Java 8
+///
+/// If no Java is found on the system, automatically downloads a JRE from Adoptium.
 pub async fn resolve_java(version_id: &str) -> Result<JavaRuntime, AppError> {
     let required = platform::required_java_version(version_id);
     let runtimes = list_java_runtimes().await?;
@@ -273,9 +275,35 @@ pub async fn resolve_java(version_id: &str) -> Result<JavaRuntime, AppError> {
         return Ok(rt.clone());
     }
 
+    // No Java found at all — auto-download from Adoptium
+    // Try required version first, then fall back to 21, then 17
+    let fallback_versions = if required == 21 {
+        vec![21, 17]
+    } else if required == 17 {
+        vec![17, 21]
+    } else {
+        vec![required, 21, 17]
+    };
+
+    let client = reqwest::Client::builder()
+        .timeout(std::time::Duration::from_secs(600))
+        .user_agent("AuroraLauncher/1.0")
+        .build()
+        .map_err(|e| AppError::NetworkRequest(format!("Failed to create HTTP client: {}", e)))?;
+
+    for &version in &fallback_versions {
+        tracing::info!("Auto-downloading Java {} from Adoptium for Minecraft {}", version, version_id);
+        match download_java(&client, version).await {
+            Ok(rt) => return Ok(rt),
+            Err(e) => {
+                tracing::warn!("Failed to download Java {}: {}; trying next version...", version, e);
+            }
+        }
+    }
+
     Err(AppError::JavaNotFound(format!(
-        "No Java runtime found on this system. Please install Java {} or later to launch Minecraft {}.",
-        required, version_id
+        "No Java runtime found and auto-download failed. Please install Java {} or later manually.",
+        required
     )))
 }
 
