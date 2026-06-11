@@ -149,8 +149,8 @@ pub async fn download_java(
     };
 
     let url = format!(
-        "{}/assets/latest/{}/{}?image_type=jre&os={}&architecture={}&vendor=eclipse",
-        ADOPTIUM_API, major_version, major_version, os_name, arch
+        "{}/assets/latest/{}/hotspot?image_type=jre&os={}&architecture={}&vendor=eclipse",
+        ADOPTIUM_API, major_version, os_name, arch
     );
 
     tracing::info!("Fetching Adoptium JRE info from: {}", url);
