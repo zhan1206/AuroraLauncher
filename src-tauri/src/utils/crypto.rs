@@ -1,8 +1,9 @@
 //! Cryptographic utility functions.
 //!
-//! Provides SHA-256 hash computation and verification for downloaded files.
+//! Provides SHA-256 and SHA-1 hash computation and verification for downloaded files.
 
 use crate::error::AppError;
+use sha1::{Digest as _, Sha1};
 use sha2::{Digest, Sha256};
 use std::path::Path;
 use tokio::io::AsyncReadExt;
@@ -56,15 +57,51 @@ pub async fn verify_sha256(path: &Path, expected: &str) -> Result<(), AppError> 
     }
 }
 
-/// Verify a SHA-1 hash (used by Mojang's API for library checksums).
+/// Compute the SHA-1 hash of a file on disk.
 ///
-/// Note: SHA-1 is not available in the sha2 crate; this is a placeholder
-/// that uses SHA-256 instead. For full Mojang compatibility, add the sha1 crate.
-pub fn verify_sha1_placeholder(data: &[u8], _expected: &str) -> bool {
-    // TODO: Add sha1 crate for proper SHA-1 verification
-    // For now, we skip SHA-1 verification but log a warning
-    tracing::warn!("SHA-1 verification not yet implemented, skipping for: {:02x?}", &data[..data.len().min(8)]);
-    true
+/// Returns the hash as a lowercase hexadecimal string.
+pub async fn sha1_file(path: &Path) -> Result<String, AppError> {
+    let mut file = tokio::fs::File::open(path)
+        .await
+        .map_err(|e| AppError::FileIo(e))?;
+
+    let mut hasher = Sha1::new();
+    let mut buffer = vec![0u8; 8192];
+
+    loop {
+        let bytes_read = file.read(&mut buffer).await.map_err(|e| AppError::FileIo(e))?;
+        if bytes_read == 0 {
+            break;
+        }
+        hasher.update(&buffer[..bytes_read]);
+    }
+
+    let result = hasher.finalize();
+    Ok(format!("{:x}", result))
+}
+
+/// Verify that a file's SHA-1 hash matches the expected value.
+pub async fn verify_sha1(path: &Path, expected: &str) -> Result<(), AppError> {
+    let actual = sha1_file(path).await?;
+    if actual.eq_ignore_ascii_case(expected) {
+        Ok(())
+    } else {
+        Err(AppError::HashMismatch {
+            expected: expected.to_string(),
+            actual,
+        })
+    }
+}
+
+/// Attempt hash verification: tries SHA-256 first, then SHA-1.
+/// Mojang provides SHA-1 hashes, while our download system defaults to SHA-256.
+pub async fn verify_hash(path: &Path, expected: &str) -> Result<(), AppError> {
+    // Try SHA-256 first
+    if verify_sha256(path, expected).await.is_ok() {
+        return Ok(());
+    }
+    // Fall back to SHA-1 (Mojang format)
+    verify_sha1(path, expected).await
 }
 
 #[cfg(test)]

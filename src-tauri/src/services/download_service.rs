@@ -236,9 +236,9 @@ pub async fn start_download(
         }
     }
 
-    // Verify SHA-256 if provided
+    // Verify hash if provided (auto-detects SHA-256 or SHA-1)
     if let Some(ref expected_hash) = task.sha256 {
-        crypto::verify_sha256(&temp_file_path, expected_hash).await?;
+        crypto::verify_hash(&temp_file_path, expected_hash).await?;
     }
 
     // Move temp file to final destination
