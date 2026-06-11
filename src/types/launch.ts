@@ -3,7 +3,7 @@
  */
 
 /** Launch status for tracking game startup. */
-export type LaunchStatus = 'idle' | 'preparing' | 'launching' | 'running' | 'exited' | 'crashed';
+export type LaunchStatus = 'idle' | 'preparing' | 'installing' | 'launching' | 'running' | 'exited' | 'crashed';
 
 /** Game log entry from the running Minecraft process. */
 export interface GameLogEntry {

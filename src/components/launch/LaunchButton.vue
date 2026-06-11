@@ -5,7 +5,7 @@
  */
 import { computed, ref } from 'vue';
 import { useLaunchStore } from '@/stores/launch';
-import { invoke } from '@tauri-apps/api/core';
+import { tauriCommand } from '@/composables/useTauriCommand';
 
 export interface LaunchButtonProps {
   /** The instance ID to launch. */
@@ -31,7 +31,7 @@ const status = computed(() => {
 });
 
 /** Whether the button is in launching state. */
-const isLaunching = computed(() => status.value === 'launching' || status.value === 'preparing');
+const isLaunching = computed(() => status.value === 'launching' || status.value === 'preparing' || status.value === 'installing');
 
 /** Whether the game is running. */
 const isRunning = computed(() => status.value === 'running');
@@ -39,9 +39,16 @@ const isRunning = computed(() => status.value === 'running');
 /** Whether we're checking install status. */
 const isChecking = computed(() => checking.value);
 
+/** Whether we're installing (download in progress). */
+const isInstalling = computed(() => status.value === 'installing');
+
 /** Button label text. */
 const buttonText = computed(() => {
   if (isChecking.value) return '检查版本...';
+  if (isInstalling.value) {
+    const pct = launchStore.currentInstallProgress?.percent ?? 0;
+    return `下载中 ${pct}%...`;
+  }
   if (isLaunching.value) return '启动中...';
   if (isRunning.value) return '停止游戏';
   if (status.value === 'crashed') return '游戏崩溃 - 重试';
@@ -66,7 +73,7 @@ async function checkAndLaunch(): Promise<void> {
 
   checking.value = true;
   try {
-    const installed = await invoke<boolean>('check_version_installed', { versionId: vid });
+    const installed = await tauriCommand<boolean>('check_version_installed', { versionId: vid });
     if (!installed) {
       const confirmed = window.confirm(
         `版本 ${vid} 尚未下载，是否立即下载并安装？\n\n点击"确定"开始下载，下载完成后将自动启动游戏。`
@@ -100,11 +107,12 @@ function handleLaunch(): void {
     class="launch-button"
     :class="{
       'launch-button--launching': isLaunching || isChecking,
+      'launch-button--installing': isInstalling,
       'launch-button--running': isRunning,
       'launch-button--crashed': status === 'crashed',
       'launch-button--disabled': disabled,
     }"
-    :disabled="(disabled && !isRunning) || isChecking"
+    :disabled="(disabled && !isRunning) || isChecking || isInstalling"
     :title="errorTooltip"
     @click="handleLaunch"
   >
@@ -185,6 +193,12 @@ function handleLaunch(): void {
 }
 
 .launch-button--launching {
+  animation: glowPulse 1.5s ease-in-out infinite alternate;
+}
+
+.launch-button--installing {
+  background: var(--color-info);
+  border-color: #3070c0;
   animation: glowPulse 1.5s ease-in-out infinite alternate;
 }
 

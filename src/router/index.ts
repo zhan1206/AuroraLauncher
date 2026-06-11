@@ -20,6 +20,12 @@ const routes: RouteRecordRaw[] = [
     meta: { title: "实例详情" },
   },
   {
+    path: "/versions",
+    name: "VersionList",
+    component: () => import("@/views/VersionListView.vue"),
+    meta: { title: "版本管理" },
+  },
+  {
     path: "/settings",
     name: "Settings",
     component: () => import("@/views/SettingsView.vue"),

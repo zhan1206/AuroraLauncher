@@ -18,6 +18,26 @@ interface LaunchExitedPayload {
   code: number;
   instance_id: string;
 }
+interface InstallProgressPayload {
+  version_id: string;
+  total_files: number;
+  completed_files: number;
+  total_bytes: number;
+  downloaded_bytes: number;
+  current_file: string;
+  stage: string;
+}
+
+export interface InstallProgress {
+  versionId: string;
+  totalFiles: number;
+  completedFiles: number;
+  totalBytes: number;
+  downloadedBytes: number;
+  currentFile: string;
+  stage: string;
+  percent: number;
+}
 
 export const useLaunchStore = defineStore("launch", () => {
   // ── State ───────────────────────────────────────────────
@@ -25,6 +45,7 @@ export const useLaunchStore = defineStore("launch", () => {
   const currentInstanceId: Ref<string | null> = ref(null);
   const logs: Ref<GameLogEntry[]> = ref([]);
   const error: Ref<string | null> = ref(null);
+  const currentInstallProgress: Ref<InstallProgress | null> = ref(null);
 
   /** Unlisteners for Tauri events. */
   const unlisteners: UnlistenFn[] = [];
@@ -34,6 +55,7 @@ export const useLaunchStore = defineStore("launch", () => {
   const isLaunching = computed(() => status.value === "launching" || status.value === "preparing");
   const isRunning = computed(() => status.value === "running");
   const isActive = computed(() => status.value !== "idle" && status.value !== "exited" && status.value !== "crashed");
+  const isInstalling = computed(() => status.value === "installing");
 
   // ── Actions ────────────────────────────────────────────
 
@@ -55,13 +77,30 @@ export const useLaunchStore = defineStore("launch", () => {
 
   /**
    * Install the version for an instance, then launch the game.
-   * Blocks until installation is complete.
+   * Listens to install:progress events for real-time feedback.
    */
   async function installAndLaunch(instanceId: string, versionId: string): Promise<void> {
-    status.value = "preparing";
+    status.value = "installing";
     currentInstanceId.value = instanceId;
     error.value = null;
     logs.value = [];
+    currentInstallProgress.value = null;
+
+    // Listen for install progress events
+    const unlistenInstall = await listen<InstallProgressPayload>("install:progress", (event) => {
+      const p = event.payload;
+      currentInstallProgress.value = {
+        versionId: p.version_id,
+        totalFiles: p.total_files,
+        completedFiles: p.completed_files,
+        totalBytes: p.total_bytes,
+        downloadedBytes: p.downloaded_bytes,
+        currentFile: p.current_file,
+        stage: p.stage,
+        percent: p.total_bytes > 0 ? Math.round((p.downloaded_bytes / p.total_bytes) * 100) : 0,
+      };
+    });
+
     try {
       // Install version files (blocks until complete)
       await tauriCommand<void>("install_version_for_instance", {
@@ -69,6 +108,7 @@ export const useLaunchStore = defineStore("launch", () => {
         versionId,
       });
       // Installation complete, now launch
+      currentInstallProgress.value = null;
       await tauriCommand<void>("launch_game", { instanceId });
       status.value = "launching";
       startListening();
@@ -76,6 +116,8 @@ export const useLaunchStore = defineStore("launch", () => {
       const cmdErr = e as CommandError;
       error.value = `安装失败: ${cmdErr.message}`;
       status.value = "crashed";
+    } finally {
+      unlistenInstall();
     }
   }
 
@@ -148,7 +190,8 @@ export const useLaunchStore = defineStore("launch", () => {
 
   return {
     status, currentInstanceId, logs, error,
-    isLaunching, isRunning, isActive,
+    isLaunching, isRunning, isActive, isInstalling,
+    currentInstallProgress,
     launch, kill, clearLogs, resetState,
     installAndLaunch,
     startListening, stopListening,

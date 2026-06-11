@@ -132,6 +132,30 @@ function logLevelClass(level: string): string {
           <span class="instance-detail__launch-error-icon">⚠️</span>
           <span class="instance-detail__launch-error-text">{{ launchStore.error }}</span>
         </div>
+
+        <!-- Install progress banner -->
+        <div
+          v-if="launchStore.currentInstanceId === instance.id && launchStore.isInstalling && launchStore.currentInstallProgress"
+          class="instance-detail__install-progress"
+        >
+          <span class="instance-detail__install-icon">⬇️</span>
+          <div class="instance-detail__install-info">
+            <span class="instance-detail__install-title">正在下载版本 {{ launchStore.currentInstallProgress.versionId }}</span>
+            <div class="instance-detail__install-bar">
+              <div
+                class="instance-detail__install-bar-fill"
+                :style="{ width: launchStore.currentInstallProgress.percent + '%' }"
+              />
+            </div>
+            <span class="instance-detail__install-detail">
+              {{ launchStore.currentInstallProgress.percent }}% —
+              {{ launchStore.currentInstallProgress.completedFiles }}/{{ launchStore.currentInstallProgress.totalFiles }} 文件
+              <span v-if="launchStore.currentInstallProgress.currentFile">
+                — {{ launchStore.currentInstallProgress.currentFile }}
+              </span>
+            </span>
+          </div>
+        </div>
       </div>
 
       <!-- Tab navigation -->
@@ -268,6 +292,63 @@ function logLevelClass(level: string): string {
 
 .instance-detail__launch-error-text {
   word-break: break-all;
+}
+
+.instance-detail__install-progress {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  margin-top: 12px;
+  padding: 12px 14px;
+  background: rgba(80, 144, 224, 0.1);
+  border: 1px solid rgba(80, 144, 224, 0.3);
+  border-radius: var(--border-radius);
+}
+
+.instance-detail__install-icon {
+  font-size: 18px;
+  flex-shrink: 0;
+  margin-top: 1px;
+}
+
+.instance-detail__install-info {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  min-width: 0;
+}
+
+.instance-detail__install-title {
+  font-family: var(--font-body);
+  font-size: var(--font-size-sm);
+  color: var(--color-info);
+  font-weight: bold;
+}
+
+.instance-detail__install-bar {
+  height: 8px;
+  background: var(--color-surface-hover);
+  border-radius: 4px;
+  overflow: hidden;
+  border: 1px solid var(--color-border);
+}
+
+.instance-detail__install-bar-fill {
+  height: 100%;
+  background: linear-gradient(90deg, var(--color-primary), var(--color-info));
+  border-radius: 4px;
+  transition: width 0.5s ease;
+  min-width: 2px;
+}
+
+.instance-detail__install-detail {
+  font-family: var(--font-body);
+  font-size: var(--font-size-xs);
+  color: var(--color-text-muted);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .instance-detail__header-info {

@@ -11,6 +11,7 @@ const route = useRoute();
 const navItems = [
   { path: '/', label: '首页', icon: '🏠' },
   { path: '/instances', label: '实例列表', icon: '📦' },
+  { path: '/versions', label: '版本管理', icon: '📦' },
   { path: '/settings', label: '设置', icon: '⚙️' },
 ];
 
