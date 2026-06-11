@@ -178,7 +178,12 @@ pub async fn launch_game(
     }
 
     // Resolve the Java runtime
-    let java_runtime = java_service::resolve_java(&instance.version_id).await?;
+    tracing::info!("Resolving Java runtime for version: {}", instance.version_id);
+    let java_runtime = java_service::resolve_java(&instance.version_id).await.map_err(|e| {
+        tracing::error!("Java resolution failed: {}", e);
+        e
+    })?;
+    tracing::info!("Using Java runtime: {} (version {})", java_runtime.path, java_runtime.version);
 
     // Get account information
     let (username, uuid, access_token) = account_service::get_mc_access_token(state).await?;

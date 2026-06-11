@@ -102,25 +102,31 @@ function handleLaunch(): void {
 }
 </script>
 
-<template>
-  <button
-    class="launch-button"
-    :class="{
-      'launch-button--launching': isLaunching || isChecking,
-      'launch-button--installing': isInstalling,
-      'launch-button--running': isRunning,
-      'launch-button--crashed': status === 'crashed',
-      'launch-button--disabled': disabled,
-    }"
-    :disabled="(disabled && !isRunning) || isChecking || isInstalling"
-    :title="errorTooltip"
-    @click="handleLaunch"
-  >
-    <!-- Checking or Launching spinner -->
-    <span v-if="isChecking || isLaunching" class="launch-button__spinner" />
+  <template>
+  <div class="launch-button-wrapper">
+    <button
+      class="launch-button"
+      :class="{
+        'launch-button--launching': isLaunching || isChecking,
+        'launch-button--installing': isInstalling,
+        'launch-button--running': isRunning,
+        'launch-button--crashed': status === 'crashed',
+        'launch-button--disabled': disabled,
+      }"
+      :disabled="(disabled && !isRunning) || isChecking || isInstalling"
+      @click="handleLaunch"
+    >
+      <!-- Checking or Launching spinner -->
+      <span v-if="isChecking || isLaunching" class="launch-button__spinner" />
 
-    <span class="launch-button__text">{{ buttonText }}</span>
-  </button>
+      <span class="launch-button__text">{{ buttonText }}</span>
+    </button>
+
+    <!-- Error message display -->
+    <p v-if="status === 'crashed' && launchStore.error" class="launch-button__error">
+      ⚠️ {{ launchStore.error }}
+    </p>
+  </div>
 </template>
 
 <style scoped>
