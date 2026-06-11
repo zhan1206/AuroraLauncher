@@ -1,22 +1,28 @@
 <script setup lang="ts">
 /**
  * LaunchButton — Large launch/stop button with animated states.
+ * Automatically prompts to download missing version files before launching.
  */
-import { computed } from 'vue';
+import { computed, ref } from 'vue';
 import { useLaunchStore } from '@/stores/launch';
+import { invoke } from '@tauri-apps/api/core';
 
 export interface LaunchButtonProps {
   /** The instance ID to launch. */
   instanceId: string;
+  /** The version ID needed by this instance. */
+  versionId?: string;
   /** Whether the button is disabled. */
   disabled?: boolean;
 }
 
 const props = withDefaults(defineProps<LaunchButtonProps>(), {
+  versionId: '',
   disabled: false,
 });
 
 const launchStore = useLaunchStore();
+const checking = ref(false);
 
 /** Current launch status */
 const status = computed(() => {
@@ -30,8 +36,12 @@ const isLaunching = computed(() => status.value === 'launching' || status.value 
 /** Whether the game is running. */
 const isRunning = computed(() => status.value === 'running');
 
+/** Whether we're checking install status. */
+const isChecking = computed(() => checking.value);
+
 /** Button label text. */
 const buttonText = computed(() => {
+  if (isChecking.value) return '检查版本...';
   if (isLaunching.value) return '启动中...';
   if (isRunning.value) return '停止游戏';
   if (status.value === 'crashed') return '游戏崩溃 - 重试';
@@ -46,12 +56,41 @@ const errorTooltip = computed(() => {
   return undefined;
 });
 
+/** Check if version is installed, prompt to download if not. */
+async function checkAndLaunch(): Promise<void> {
+  const vid = props.versionId;
+  if (!vid) {
+    await launchStore.launch(props.instanceId);
+    return;
+  }
+
+  checking.value = true;
+  try {
+    const installed = await invoke<boolean>('check_version_installed', { versionId: vid });
+    if (!installed) {
+      const confirmed = window.confirm(
+        `版本 ${vid} 尚未下载，是否立即下载并安装？\n\n点击"确定"开始下载，下载完成后将自动启动游戏。`
+      );
+      if (confirmed) {
+        await launchStore.installAndLaunch(props.instanceId, vid);
+        return;
+      }
+      return;
+    }
+    await launchStore.launch(props.instanceId);
+  } catch (e) {
+    await launchStore.launch(props.instanceId);
+  } finally {
+    checking.value = false;
+  }
+}
+
 /** Launch or kill the game. */
 function handleLaunch(): void {
   if (isRunning.value) {
     launchStore.kill();
   } else {
-    launchStore.launch(props.instanceId);
+    checkAndLaunch();
   }
 }
 </script>
@@ -60,17 +99,17 @@ function handleLaunch(): void {
   <button
     class="launch-button"
     :class="{
-      'launch-button--launching': isLaunching,
+      'launch-button--launching': isLaunching || isChecking,
       'launch-button--running': isRunning,
       'launch-button--crashed': status === 'crashed',
       'launch-button--disabled': disabled,
     }"
-    :disabled="disabled && !isRunning"
+    :disabled="(disabled && !isRunning) || isChecking"
     :title="errorTooltip"
     @click="handleLaunch"
   >
-    <!-- Launching spinner -->
-    <span v-if="isLaunching" class="launch-button__spinner" />
+    <!-- Checking or Launching spinner -->
+    <span v-if="isChecking || isLaunching" class="launch-button__spinner" />
 
     <span class="launch-button__text">{{ buttonText }}</span>
   </button>

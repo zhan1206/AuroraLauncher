@@ -86,6 +86,20 @@ pub async fn get_version_detail(
     Ok(CommandResponse::ok(detail))
 }
 
+/// Check whether a specific version is installed (version.json and client jar exist).
+#[tauri::command]
+pub async fn check_version_installed(
+    version_id: String,
+) -> CommandResult<bool> {
+    let data_dir = crate::utils::file::data_dir();
+    let version_dir = data_dir.join("versions").join(&version_id);
+    let version_json = version_dir.join(format!("{}.json", version_id));
+    let client_jar = version_dir.join(format!("{}.jar", version_id));
+
+    let installed = version_json.exists() && client_jar.exists();
+    Ok(CommandResponse::ok(installed))
+}
+
 /// Helper: get the current download mirror from settings.
 async fn get_mirror(state: &AppState) -> DownloadMirror {
     let pool = match state.db_pool.get() {

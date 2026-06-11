@@ -64,6 +64,7 @@ pub fn run() {
             commands::version::get_version_manifest,
             commands::version::get_version_detail,
             commands::version::list_versions,
+            commands::version::check_version_installed,
             // ── Install Commands ──
             commands::install::install_version,
             commands::install::install_version_for_instance,

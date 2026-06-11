@@ -53,6 +53,32 @@ export const useLaunchStore = defineStore("launch", () => {
     }
   }
 
+  /**
+   * Install the version for an instance, then launch the game.
+   * Shows install progress via the download system.
+   */
+  async function installAndLaunch(instanceId: string, versionId: string): Promise<void> {
+    status.value = "preparing";
+    currentInstanceId.value = instanceId;
+    error.value = null;
+    logs.value = [];
+    try {
+      // Trigger version installation (blocks until complete)
+      await tauriCommand<void>("install_version_for_instance", {
+        instanceId,
+        mirror: null,
+      });
+      // Installation complete, now launch
+      await tauriCommand<void>("launch_game", { instanceId });
+      status.value = "launching";
+      startListening();
+    } catch (e) {
+      const cmdErr = e as CommandError;
+      error.value = `安装失败: ${cmdErr.message}`;
+      status.value = "crashed";
+    }
+  }
+
   async function kill(): Promise<void> {
     try {
       await tauriCommand<void>("kill_game");
@@ -124,6 +150,7 @@ export const useLaunchStore = defineStore("launch", () => {
     status, currentInstanceId, logs, error,
     isLaunching, isRunning, isActive,
     launch, kill, clearLogs, resetState,
+    installAndLaunch,
     startListening, stopListening,
   };
 });

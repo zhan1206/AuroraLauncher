@@ -122,7 +122,7 @@ function logLevelClass(level: string): string {
               </span>
             </div>
           </div>
-          <LaunchButton :instance-id="instance.id" />
+          <LaunchButton :instance-id="instance.id" :version-id="instance.version_id" />
         </div>
         <!-- Launch error banner -->
         <div
