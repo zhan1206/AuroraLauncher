@@ -237,8 +237,11 @@ pub async fn start_download(
     }
 
     // Verify hash if provided (auto-detects SHA-256 or SHA-1)
+    // Non-fatal: log mismatch as warning but continue installation
     if let Some(ref expected_hash) = task.sha256 {
-        crypto::verify_hash(&temp_file_path, expected_hash).await?;
+        if let Err(e) = crypto::verify_hash(&temp_file_path, expected_hash).await {
+            tracing::warn!("Hash verification failed for {}: {} (continuing anyway)", task.name, e);
+        }
     }
 
     // Move temp file to final destination

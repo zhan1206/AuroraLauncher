@@ -264,8 +264,17 @@ pub async fn resolve_java(version_id: &str) -> Result<JavaRuntime, AppError> {
         return Ok(rt.clone());
     }
 
+    // Last resort: use any available Java (any version beats no version)
+    if let Some(rt) = runtimes.first() {
+        tracing::warn!(
+            "No Java {} found for Minecraft {}; falling back to Java {} at {}",
+            required, version_id, rt.major_version, rt.path
+        );
+        return Ok(rt.clone());
+    }
+
     Err(AppError::JavaNotFound(format!(
-        "No Java {} runtime found for Minecraft {}",
+        "No Java runtime found on this system. Please install Java {} or later to launch Minecraft {}.",
         required, version_id
     )))
 }

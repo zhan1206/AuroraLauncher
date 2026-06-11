@@ -189,7 +189,7 @@ pub async fn is_valid_java(path: &std::path::Path) -> bool {
 pub fn find_system_java() -> Vec<std::path::PathBuf> {
     let mut found = Vec::new();
 
-    // Check JAVA_HOME
+    // 1. Check JAVA_HOME
     if let Ok(java_home) = env::var("JAVA_HOME") {
         let java_bin = if cfg!(target_os = "windows") {
             std::path::PathBuf::from(&java_home).join("bin").join("javaw.exe")
@@ -201,25 +201,132 @@ pub fn find_system_java() -> Vec<std::path::PathBuf> {
         }
     }
 
-    // Check common installation directories
-    if cfg!(target_os = "windows") {
-        let program_files = env::var("ProgramFiles").unwrap_or_else(|_| r"C:\Program Files".to_string());
-        let program_files_x86 = env::var("ProgramFiles(x86)").unwrap_or_else(|_| r"C:\Program Files (x86)".to_string());
-
-        for base in [&program_files, &program_files_x86] {
-            let java_dir = std::path::PathBuf::from(base).join("Java");
-            if java_dir.exists() {
-                if let Ok(entries) = std::fs::read_dir(&java_dir) {
-                    for entry in entries.flatten() {
-                        let javaw = entry.path().join("bin").join("javaw.exe");
-                        if javaw.exists() {
-                            found.push(javaw);
-                        }
-                    }
+    // 2. Search PATH for java / javaw
+    if let Ok(path_var) = env::var("PATH") {
+        let exe_name = if cfg!(target_os = "windows") {
+            "javaw.exe"
+        } else {
+            "java"
+        };
+        for dir in env::split_paths(&path_var) {
+            let candidate = dir.join(exe_name);
+            if candidate.exists() && !found.contains(&candidate) {
+                found.push(candidate);
+            }
+            // On Windows also check java.exe
+            if cfg!(target_os = "windows") {
+                let java_exe = dir.join("java.exe");
+                if java_exe.exists() && !found.contains(&java_exe) {
+                    found.push(java_exe);
                 }
             }
         }
     }
 
+    // 3. Check common Windows installation directories
+    if cfg!(target_os = "windows") {
+        let program_files = env::var("ProgramFiles").unwrap_or_else(|_| r"C:\Program Files".to_string());
+        let program_files_x86 = env::var("ProgramFiles(x86)").unwrap_or_else(|_| r"C:\Program Files (x86)".to_string());
+
+        for base in &[&program_files, &program_files_x86] {
+            let java_dir = std::path::PathBuf::from(base).join("Java");
+            scan_java_dir(&java_dir, &mut found);
+
+            // Also check direct subdirs for Eclipse/Adoptium/OpenJDK
+            if let Ok(entries) = std::fs::read_dir(base.as_str()) {
+                for entry in entries.flatten() {
+                    let name = entry.file_name().to_string_lossy().to_lowercase();
+                    if name.contains("java") || name.contains("jdk") || name.contains("jre")
+                        || name.contains("temurin") || name.contains("adoptium")
+                        || name.contains("openjdk") || name.contains("zulu") {
+                        scan_java_dir(&entry.path(), &mut found);
+                    }
+                }
+            }
+        }
+
+        // 4. Check Scoop / Chocolatey / winget / SDKMAN-style locations
+        if let Ok(local_appdata) = env::var("LOCALAPPDATA") {
+            for tool in &["scoop", "chocolatey", "Microsoft\\winget\\packages"] {
+                let dir = std::path::PathBuf::from(&local_appdata).join(tool).join("apps");
+                if dir.exists() {
+                    if let Ok(entries) = std::fs::read_dir(&dir) {
+                        for entry in entries.flatten() {
+                            let name = entry.file_name().to_string_lossy().to_lowercase();
+                            if name.contains("java") || name.contains("temurin") || name.contains("openjdk") {
+                                scan_java_dir(&entry.path(), &mut found);
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        // 5. Check Eclipse Adoptium default install path
+        let adoptium_path = std::path::PathBuf::from(&program_files).join("Eclipse Adoptium");
+        if adoptium_path.exists() {
+            scan_java_dir(&adoptium_path, &mut found);
+        }
+        let adoptium_x86 = std::path::PathBuf::from(&program_files_x86).join("Eclipse Adoptium");
+        if adoptium_x86.exists() {
+            scan_java_dir(&adoptium_x86, &mut found);
+        }
+
+        // 6. Check JetBrains bundled JDKs
+        if let Ok(local_appdata) = env::var("LOCALAPPDATA") {
+            let jb_dir = std::path::PathBuf::from(&local_appdata)
+                .join("JetBrains")
+                .join("Toolbox")
+                .join("apps");
+            if jb_dir.exists() {
+                scan_java_dir(&jb_dir, &mut found);
+            }
+        }
+    }
+
     found
+}
+
+/// Recursively scan a directory for javaw.exe / java executables (max 2 levels deep).
+fn scan_java_dir(dir: &std::path::Path, found: &mut Vec<std::path::PathBuf>) {
+    if !dir.exists() {
+        return;
+    }
+    let exe_name = if cfg!(target_os = "windows") {
+        "javaw.exe"
+    } else {
+        "java"
+    };
+
+    // Direct bin/ subdirectory
+    let direct = dir.join("bin").join(exe_name);
+    if direct.exists() && !found.contains(&direct) {
+        found.push(direct);
+    }
+    // Also direct java.exe on Windows
+    if cfg!(target_os = "windows") {
+        let java_exe = dir.join("bin").join("java.exe");
+        if java_exe.exists() && !found.contains(&java_exe) {
+            found.push(java_exe);
+        }
+    }
+
+    // One level deeper (e.g. Eclipse Adoptium/jdk-17.0.9+9/bin/javaw.exe)
+    if let Ok(entries) = std::fs::read_dir(dir) {
+        for entry in entries.flatten() {
+            let path = entry.path();
+            if path.is_dir() {
+                let nested = path.join("bin").join(exe_name);
+                if nested.exists() && !found.contains(&nested) {
+                    found.push(nested);
+                }
+                if cfg!(target_os = "windows") {
+                    let java_exe = path.join("bin").join("java.exe");
+                    if java_exe.exists() && !found.contains(&java_exe) {
+                        found.push(java_exe);
+                    }
+                }
+            }
+        }
+    }
 }
