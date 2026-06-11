@@ -55,7 +55,7 @@ export const useLaunchStore = defineStore("launch", () => {
 
   /**
    * Install the version for an instance, then launch the game.
-   * Shows install progress via the download system.
+   * Blocks until installation is complete.
    */
   async function installAndLaunch(instanceId: string, versionId: string): Promise<void> {
     status.value = "preparing";
@@ -63,10 +63,10 @@ export const useLaunchStore = defineStore("launch", () => {
     error.value = null;
     logs.value = [];
     try {
-      // Trigger version installation (blocks until complete)
+      // Install version files (blocks until complete)
       await tauriCommand<void>("install_version_for_instance", {
         instanceId,
-        mirror: null,
+        versionId,
       });
       // Installation complete, now launch
       await tauriCommand<void>("launch_game", { instanceId });
