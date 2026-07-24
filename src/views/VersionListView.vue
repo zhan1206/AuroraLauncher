@@ -5,7 +5,7 @@
  * Shows all available Minecraft versions, marks installed ones,
  * and provides one-click download for missing versions.
  */
-import { onMounted, ref, computed, watch } from 'vue';
+import { onMounted, ref, computed } from 'vue';
 import { useVersionStore } from '@/stores/version';
 import { tauriCommand } from '@/composables/useTauriCommand';
 import { listen, type UnlistenFn } from '@tauri-apps/api/event';
@@ -77,7 +77,7 @@ async function listenForProgress() {
     current_file: string;
     stage: string;
   }>('install:progress', (event) => {
-    const { version_id, total_files, completed_files, downloaded_bytes, total_bytes, current_file, stage } = event.payload;
+    const { version_id, downloaded_bytes, total_bytes, current_file, stage } = event.payload;
     const pct = total_bytes > 0 ? Math.round((downloaded_bytes / total_bytes) * 100) : 0;
     installProgress.value[version_id] = {
       pct,
@@ -102,7 +102,7 @@ async function checkAllInstalled() {
   for (let i = 0; i < vers.length; i += 10) {
     const batch = vers.slice(i, i + 10);
     const results = await Promise.allSettled(
-      batch.map((v) => invoke<boolean>('check_version_installed', { versionId: v.id }))
+      batch.map((v) => tauriCommand<boolean>('check_version_installed', { versionId: v.id }))
     );
     results.forEach((r, j) => {
       if (r.status === 'fulfilled' && r.value) {
@@ -139,14 +139,6 @@ function formatDate(iso: string): string {
   } catch {
     return iso;
   }
-}
-
-function formatSize(bytes: number): string {
-  if (bytes === 0) return '0 B';
-  const k = 1024;
-  const sizes = ['B', 'KB', 'MB', 'GB'];
-  const i = Math.floor(Math.log(bytes) / Math.log(k));
-  return parseFloat((bytes / Math.pow(k, i)).toFixed(1)) + ' ' + sizes[i];
 }
 
 function typeLabel(type: string): string {

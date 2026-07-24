@@ -55,14 +55,6 @@ const buttonText = computed(() => {
   return '▶ 启动游戏';
 });
 
-/** Error tooltip text when crashed. */
-const errorTooltip = computed(() => {
-  if (status.value === 'crashed' && launchStore.error) {
-    return launchStore.error;
-  }
-  return undefined;
-});
-
 /** Check if version is installed, prompt to download if not. */
 async function checkAndLaunch(): Promise<void> {
   const vid = props.versionId;
